@@ -17,14 +17,11 @@ public class PhotoDAO extends DAO
       
       try
       {
-//         begin();
          Query query = getSession().createQuery("from PhotoFile order by FILENAME");
-//         commit();
          return query.list();
       }
       catch (HibernateException ex)
       {
-//         rollback();
          throw new Exception("Could not getAllPhotoFiles()", ex);
       }
       finally
@@ -39,16 +36,13 @@ public class PhotoDAO extends DAO
       
       try
       {
-//         begin();
          Query query = getSession().createQuery("from PhotoTag where TAG='" + tag + "' order by TAG");
          PhotoTag photoTag = (PhotoTag) query.uniqueResult();
-//         commit();
          Set<PhotoFile> hashSet = photoTag.getPhotoFiles();
          return new TreeSet<PhotoFile>(hashSet);
       }
       catch (HibernateException ex)
       {
-//         rollback();
          throw new Exception("Could not getPhotosFiles()", ex);
       }
       finally
@@ -63,15 +57,12 @@ public class PhotoDAO extends DAO
       
       try
       {
-//         begin();
          Query query = getSession().createQuery("from PhotoTag order by TAG");
          List<PhotoTag> list = query.list();
-//         commit();
          return list;
       }
       catch (HibernateException ex)
       {
-//         rollback();
          throw new Exception("Could not getAllTags()", ex);
       }
       finally
@@ -86,14 +77,11 @@ public class PhotoDAO extends DAO
       
       try
       {
-//         begin();
          Query query = getSession().createQuery("from PhotoFile where FILENAME = '" + fileToLookup + "'");
-//         commit();
          return (PhotoFile) query.uniqueResult();
       }
       catch (HibernateException ex)
       {
-//         rollback();
          throw new Exception("Could not getPhotoFile(" + fileToLookup + ")", ex);
       }
       finally
@@ -150,5 +138,4 @@ public class PhotoDAO extends DAO
          log.log(Level.INFO, "cvcvcv: Leaving createPhotoFile <" + fileName + ">");
       }
    }
-
 }

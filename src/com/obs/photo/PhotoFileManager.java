@@ -1,12 +1,9 @@
 package com.obs.photo;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.channels.FileChannel;
+import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -21,6 +18,7 @@ import com.drew.metadata.Tag;
 public class PhotoFileManager
 {
    static final String exts[] = { ".jpg", ".png", ".bmp", ".gif" };
+   static final String ignoreFolders[] = { "Corel Auto-Preserve", ".picasaoriginals" };
    
    public static void main(String[] args)
    {
@@ -107,7 +105,7 @@ public class PhotoFileManager
 
       for (File item : items)
       {
-         if (item.isDirectory() && item.getAbsolutePath().indexOf(".picasaoriginals") < 0)
+         if (item.isDirectory() && isValidFolder(item))
          {
             scanFolder(photoDAO, item.getAbsolutePath());
          }
@@ -119,6 +117,22 @@ public class PhotoFileManager
             }
          }
       }
+   }
+   
+   private boolean isValidFolder(File folder)
+   {
+      boolean isValidFolder = true;
+      
+      for (String ignoreFolder : ignoreFolders)
+      {
+         if (folder.getAbsolutePath().indexOf(ignoreFolder) >= 0)
+         {
+            isValidFolder = false;
+            break;
+         }
+      }
+      
+      return isValidFolder;
    }
 
    private boolean isResource(File file)
@@ -191,25 +205,24 @@ public class PhotoFileManager
       {
          PhotoFile photoFile = photoDAO.getPhotoFile(fileToLookup);
 
-         
-       //System.out.println("cvcvcv: size of list = " + list.size());
-       //System.out.println("cvcvcv: file lastModified = " + file.lastModified());
+//System.out.println("cvcvcv: size of list = " + list.size());
+//System.out.println("cvcvcv: file lastModified = " + file.lastModified());
              
-          if (photoFile != null)
-          {
-             
+         if (photoFile != null)
+         {
+            
 //System.out.println("cvcvcv: file lastScanned = " + photoFile.getLastScanned().getTime());
-             
-             if (file.lastModified() < photoFile.getLastScanned().getTime())
-             {
-                returnvalue = false;
-             }
-             else
-             {
-                photoFile.getTags().clear();
-                photoDAO.delete(photoFile);
-             }
-          }
+            
+            if (file.lastModified() < photoFile.getLastScanned().getTime())
+            {
+               returnvalue = false;
+            }
+            else
+            {
+               photoFile.getTags().clear();
+               photoDAO.delete(photoFile);
+            }
+         }
       }
       catch (Exception ex)
       {
@@ -224,24 +237,25 @@ public class PhotoFileManager
    {
       if (doesThisFileNeedToBeAddedToDatabase(photoDAO, file))
       {
-         Date lastModified = new Date(file.lastModified());
-         String fileName = file.getAbsolutePath().substring(3).replace('\\', '/');
+         final Date lastModified = new Date(file.lastModified());
+         final Date lastScanned = new Date();
+         final String fileName = file.getAbsolutePath().substring(3).replace('\\', '/');
 
-         PhotoFile photoFile = new PhotoFile();
+         final PhotoFile photoFile = new PhotoFile();
          photoFile.setFileName(fileName);
          photoFile.setLastModified(lastModified);
-         photoFile.setLastScanned(new Date());
+         photoFile.setLastScanned(lastScanned);
          Set<PhotoTag> pt2 = new HashSet<PhotoTag>();
 
          try
          {
-            List<PhotoTag> photoTags = photoDAO.getAllTags();
-            List<String> exifTags = getExifTags(file);
+            final List<PhotoTag> photoTags = photoDAO.getAllTags();
+            final List<String> exifTags = getExifTags(file);
 
             for (String exifTag : exifTags)
             {
                PhotoTag photoTag = null;
-               Iterator<PhotoTag> iterator = photoTags.iterator();
+               final Iterator<PhotoTag> iterator = photoTags.iterator();
                while (iterator.hasNext())
                {
                   PhotoTag temp = iterator.next();
@@ -267,7 +281,7 @@ public class PhotoFileManager
 
          try
          {
-            photoDAO.createPhotoFile(fileName, lastModified, new Date(), pt2);
+            photoDAO.createPhotoFile(fileName, lastModified, lastScanned, pt2);
             copyFileToServer(file);
          }
          catch (Exception e)
@@ -280,46 +294,45 @@ public class PhotoFileManager
 
    void copyFileToServer(File sourceFile) throws IOException
    {
-      final String dir = System.getProperty("user.dir") + "/WebContent/images";
-      String sourcePath = sourceFile.getAbsolutePath().substring(2).replace("\\", "/");
-      File destFile = new File(dir + sourcePath);
-      File parentPath = destFile.getParentFile();
+      final String sourcePath = sourceFile.getAbsolutePath().substring(2).replace("\\", "/");
+      final File newSourceFile = new File(sourcePath);
+
+      final String destDir = System.getProperty("user.dir") + "/WebContent/images";
+      final File destFile = new File(destDir + sourcePath);
+      final File parentPath = destFile.getParentFile();
       if (!parentPath.exists())
       {
          parentPath.mkdirs();
       }
 
-      if (!destFile.exists())
-      {
-         destFile.createNewFile();
-      }
 
-      FileChannel source = null;
-      FileChannel destination = null;
-
-      try
-      {
-         source = new FileInputStream(sourceFile).getChannel();
-         destination = new FileOutputStream(destFile).getChannel();
-         destination.transferFrom(source, 0, source.size());
-      }
-      finally
-      {
-         if (source != null)
-         {
-            source.close();
-         }
-         if (destination != null)
-         {
-            destination.close();
-         }
-      }
-   }
-
-   <T extends Comparable<? super T>> List<T> asSortedList(Collection<T> c)
-   {
-      List<T> list = new ArrayList<T>(c);
-      java.util.Collections.sort(list);
-      return list;
+      Files.copy(newSourceFile.toPath(), destFile.toPath());
+      
+      
+//      if (!destFile.exists())
+//      {
+//         destFile.createNewFile();
+//      }
+//
+//      FileChannel source = null;
+//      FileChannel destination = null;
+//
+//      try
+//      {
+//         source = new FileInputStream(sourceFile).getChannel();
+//         destination = new FileOutputStream(destFile).getChannel();
+//         destination.transferFrom(source, 0, source.size());
+//      }
+//      finally
+//      {
+//         if (source != null)
+//         {
+//            source.close();
+//         }
+//         if (destination != null)
+//         {
+//            destination.close();
+//         }
+//      }
    }
 }
