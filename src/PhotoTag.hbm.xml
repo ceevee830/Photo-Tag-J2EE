@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-mapping PUBLIC 
+ "-//Hibernate/Hibernate Mapping DTD//EN"
+ "http://www.hibernate.org/dtd/hibernate-mapping-3.0.dtd">
+
+<hibernate-mapping>
+
+    	<class name="com.obs.photo.PhotoTag" table="PHOTO_TAG">
+		<meta attribute="class-description">
+			This class contains tags for digital photographs.
+		</meta>
+		<id name="id" type="int" column="id">
+			<generator class="native" />
+		</id>
+		<property name="tag" column="tag" type="string" />
+<!--   		<property name="tagId" column="tag_id" type="int" />	 -->
+	</class>
+
+</hibernate-mapping>

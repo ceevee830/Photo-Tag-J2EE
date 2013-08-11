@@ -1,0 +1,101 @@
+package com.obs.photo;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Date;
+
+import javax.persistence.Column;
+import javax.persistence.ElementCollection;
+import javax.persistence.Entity;
+import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
+import javax.persistence.Id;
+import javax.persistence.JoinTable;
+import javax.persistence.Table;
+import javax.persistence.Temporal;
+import javax.persistence.TemporalType;
+
+import org.hibernate.annotations.CollectionId;
+import org.hibernate.annotations.GenericGenerator;
+import org.hibernate.annotations.Type;
+
+@Entity
+@Table (name="PHOTOFILE")
+public class PhotoFile
+{
+   @Column (name="file_name")
+   private String fileName;
+   
+   @Id @GeneratedValue(strategy=GenerationType.AUTO)     // Primary key for object
+   private int id;         // surrogate key
+   
+   @Column (name="file_last_modified")
+   @Temporal (TemporalType.TIMESTAMP)
+   private Date lastModified;
+   
+   @Column (name="file_last_scanned")
+   @Temporal (TemporalType.TIMESTAMP)
+   private Date lastScanned;
+
+   @ElementCollection
+   @JoinTable (name="PHOTOFILE_TAGS")
+   @GenericGenerator(name = "hilo-gen", strategy = "hilo")
+   @CollectionId (columns={@Column(name="TAGINDEX")}, generator="hilo-gen", type=@Type(type = "long"))
+   private Collection<PhotoTag> listOfPhotoTags = new ArrayList<PhotoTag>();
+   
+   public PhotoFile()
+   {
+   }
+
+   public String getFileName()
+   {
+      return fileName;
+   }
+
+   public void setFileName(String fileName)
+   {
+      this.fileName = fileName;
+   }
+
+   public int getId()
+   {
+      return id;
+   }
+
+   public void setId(int id)
+   {
+      this.id = id;
+   }
+
+   public Date getLastModified()
+   {
+      return lastModified;
+   }
+
+   public void setLastModified(Date lastModified)
+   {
+      this.lastModified = lastModified;
+   }
+   
+   public Date getLastScanned()
+   {
+      return lastScanned;
+   }
+
+   public void setLastScanned(Date lastScanned)
+   {
+      this.lastScanned = lastScanned;
+   }
+
+   public Collection<PhotoTag> getListOfPhotoTags()
+   {
+      return listOfPhotoTags;
+   }
+
+   public void setListOfPhotoTags(Collection<PhotoTag> listOfPhotoTags)
+   {
+      this.listOfPhotoTags = listOfPhotoTags;
+   }
+
+   
+}
